@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:percent_indicator/circular_percent_indicator.dart' 
-show CircularPercentIndicator;
+import 'dart:async';
 
-class HabitTile extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart'
+    show CircularPercentIndicator;
+
+class HabitTile extends StatefulWidget {
   final String habitName;
-  final VoidCallback onTap;
-  final VoidCallback settingsTapped;
   final int timeSpent;
   final int timeGoal;
   final bool habitStarted;
@@ -13,34 +13,47 @@ class HabitTile extends StatelessWidget {
   const HabitTile({
     Key? key,
     required this.habitName,
-    required this.onTap,
-    required this.settingsTapped,
     required this.timeSpent,
     required this.habitStarted,
     required this.timeGoal,
   }) : super(key: key);
 
-  // convert seconds into min:sec
-  String formatToMinSec(int totalSeconds) {
-    String secs = (totalSeconds / 60).toString();
-    String mins = (totalSeconds / 60).toStringAsFixed(6);
+  @override
+  State<HabitTile> createState() => _HabitTileState();
+}
 
-    // if sec is 1 digit number, add 0 in front 
-    if (secs.length == 1) {
-      secs = '0 + secs';
-    }
+class _HabitTileState extends State<HabitTile> {
+  var mTimeSpent = 0;
+  var mTimeGoal = 0;
+  var mHabitStarted = false;
 
-    // if mins is a 1 digit number
-    if (mins[1] == '.') {
-      mins = mins.substring(0, 1);
-    }
-    // ignore: prefer_interpolation_to_compose_strings
-    return mins + ':' + secs;
+  String formatTime() {
+    return '$mTimeSpent / $mTimeGoal'
+        ' = ${(percentCompleted() * 100).toStringAsFixed(0)}';
   }
 
-  // calculate progress percentage
   double percentCompleted() {
-    return timeSpent / timeGoal*60;
+    var percent = mTimeSpent / mTimeGoal;
+
+    if (percent == 1.0) {
+      setState(() => mHabitStarted = false);
+    }
+    return percent < 1 ? percent : 1;
+  }
+
+  void startHabit() {
+    setState(() => mHabitStarted = true);
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() => !mHabitStarted ? timer.cancel() : mTimeSpent++);
+    });
+  }
+
+  @override
+  void initState() {
+    mTimeSpent = widget.timeSpent;
+    mTimeGoal = widget.timeGoal;
+    mHabitStarted = widget.habitStarted;
+    super.initState();
   }
 
   @override
@@ -59,7 +72,7 @@ class HabitTile extends StatelessWidget {
             Row(
               children: [
                 GestureDetector(
-                  onTap: onTap,
+                  onTap: () => startHabit(),
                   child: SizedBox(
                     height: 60,
                     width: 60,
@@ -67,20 +80,17 @@ class HabitTile extends StatelessWidget {
                       children: [
                         CircularPercentIndicator(
                           radius: 40,
-                          percent:
-                           percentCompleted() > 1 
-                           ? percentCompleted() :1,
+                          percent: percentCompleted(),
                           progressColor: percentCompleted() > 0.5
-                          ?(percentCompleted() >0.7
-                          ?Colors.green
-                          :Colors.orange)
-                          :Colors.red,
-
+                              ? (percentCompleted() > 0.7
+                                  ? Colors.green
+                                  : Colors.orange)
+                              : Colors.red,
                         ),
                         // play pause button
                         Center(
                           child: Icon(
-                            habitStarted ? Icons.pause : Icons.play_arrow,
+                            mHabitStarted ? Icons.pause : Icons.play_arrow,
                           ),
                         ),
                       ],
@@ -88,7 +98,6 @@ class HabitTile extends StatelessWidget {
                   ),
                 ),
 
-                
                 // progress circle
                 const SizedBox(width: 20),
                 Column(
@@ -96,7 +105,7 @@ class HabitTile extends StatelessWidget {
                   children: [
                     // habit names
                     Text(
-                      habitName,
+                      widget.habitName,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 17,
@@ -104,10 +113,9 @@ class HabitTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     // progress
-                    // progress
+
                     Text(
-                      '${formatToMinSec(timeSpent)}/$timeGoal=' 
-                          '${(percentCompleted() * 100).toStringAsFixed(0)}%',
+                      formatTime(),
                       style: const TextStyle(
                         color: Colors.grey,
                       ),
@@ -117,7 +125,16 @@ class HabitTile extends StatelessWidget {
               ],
             ),
             GestureDetector(
-              onTap: settingsTapped,
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: Text('Settings for ${widget.habitName}'),
+                    );
+                  },
+                );
+              },
               child: const Icon(Icons.settings),
             ),
           ],
@@ -126,6 +143,3 @@ class HabitTile extends StatelessWidget {
     );
   }
 }
-
-
-
