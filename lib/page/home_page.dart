@@ -16,17 +16,17 @@ class _HomePageState extends State<HomePage> {
     //[ habitName, habitStarter, timeSpent (sec), timeGoal (min)]
     ['Exercise', false, 4, 10],
     ['Nap', false, 0, 20],
-    ['Code',false, 0, 30],
-    ['Medication',false, 0, 40],   
+    ['Code', false, 0, 30],
+    ['Medication', false, 0, 40],
   ];
 
-  void habitStarted(int index){
+  void habitStarted(int index) {
     // note what the start time is
     var startTime = DateTime.now();
 
     //include time already elapsed
     // ignore: unused_local_variable
-    int elapsedSeconds = habitList[index][2];
+    int elaspedTime = habitList[index][2];
 
     //habit started or stopped
     setState(() {
@@ -38,13 +38,13 @@ class _HomePageState extends State<HomePage> {
       Timer.periodic(const Duration(seconds: 1), (timer) {
         setState(() {
           // check when the user stops the timer
-          if (habitList[index][1] == false){
+          if (habitList[index][1] == false) {
             timer.cancel();
           }
 
           // calculate the time elapsed by comparing current time and start time
           var currentTime = DateTime.now();
-          habitList[index][2] = currentTime.second -
+          habitList[index][2] = elaspedTime + currentTime.second -
               startTime.second +
               60 * (currentTime.minute - startTime.minute) +
               60 * 60 * (currentTime.hour - startTime.hour);
@@ -55,7 +55,7 @@ class _HomePageState extends State<HomePage> {
 
   void settingsOpened(int index) {
     showDialog(
-      context: context, 
+      context: context,
       builder: (context) {
         return AlertDialog(
           title: Text('Settings for ${habitList[index][0]}'),
@@ -77,22 +77,18 @@ class _HomePageState extends State<HomePage> {
         itemCount: habitList.length,
         itemBuilder: ((context, index) {
           return HabitTile(
-            habitName: habitList[index][0], 
-            onTap: () {
-              habitStarted(index);
-            },
-            settingsTapped: () {
-              settingsOpened(index);
-            },
-            habitStarted: habitList[index][1],
-            timeSpent: habitList[index][2], 
-            timeGoal: habitList[index][3]
-          );
+              habitName: habitList[index][0],
+              onTap: () {
+                habitStarted(index);
+              },
+              settingsTapped: () {
+                settingsOpened(index);
+              },
+              habitStarted: habitList[index][1],
+              timeSpent: habitList[index][2],
+              timeGoal: habitList[index][3]);
         }),
       ),
     );
   }
-  
-  
 }
-
